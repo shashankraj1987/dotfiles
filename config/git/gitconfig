@@ -1,0 +1,9 @@
+[core]
+	autocrlf = true
+	editor = code --wait
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = false
