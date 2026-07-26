@@ -1,0 +1,9 @@
+[core]
+	autocrlf = input
+	editor = nvim
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = false
