@@ -71,7 +71,7 @@ dotfiles/
 ```bash
 ./bootstrap.sh          # Install packages and configure zsh
 ./bootstrap.sh --force  # Reinstall packages and refresh generated files
-./scripts/update.sh     # Upgrade apt packages and Oh My Posh
+./scripts/update.sh     # Upgrade apt packages and Oh My Posh, flag outdated asusctl if installed
 ./scripts/verify.sh     # Check expected tools are available
 ```
 
