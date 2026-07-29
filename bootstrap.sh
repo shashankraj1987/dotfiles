@@ -25,6 +25,13 @@ source "$INSTALLER_ROOT/common.sh"
 
 write_banner "Linux Developer Environment Setup"
 
+detect_package_manager
+if [ "$PKG_MANAGER" = "unknown" ]; then
+    echo "No supported package manager found (need apt, dnf, or pacman)." >&2
+    exit 1
+fi
+write_step "Detected package manager: $PKG_MANAGER"
+
 source "$INSTALLER_ROOT/packages.sh"
 source "$INSTALLER_ROOT/zsh.sh"
 source "$INSTALLER_ROOT/git.sh"

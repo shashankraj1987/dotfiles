@@ -28,31 +28,116 @@ has_command() {
     command -v "$1" >/dev/null 2>&1
 }
 
-apt_package_installed() {
-    dpkg -s "$1" >/dev/null 2>&1
+# Detects apt (Debian/Ubuntu), dnf (Fedora), or pacman (Arch) and records it in
+# PKG_MANAGER. All package steps go through this instead of assuming apt.
+PKG_MANAGER=""
+
+detect_package_manager() {
+    [ -n "$PKG_MANAGER" ] && return
+
+    if has_command apt-get; then
+        PKG_MANAGER="apt"
+    elif has_command dnf; then
+        PKG_MANAGER="dnf"
+    elif has_command pacman; then
+        PKG_MANAGER="pacman"
+    else
+        PKG_MANAGER="unknown"
+    fi
 }
 
-install_apt_package() {
+# On Arch-based systems, yay wraps pacman for both official-repo and AUR
+# packages. It isn't preinstalled anywhere, so bootstrap it from the AUR the
+# first time a pacman-based install is needed.
+ensure_yay() {
+    [ "$PKG_MANAGER" = "pacman" ] || return 0
+    has_command yay && return 0
+
+    write_step "Installing yay (AUR helper)..."
+    sudo pacman -S --needed --noconfirm base-devel git
+
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    git clone --quiet https://aur.archlinux.org/yay-bin.git "$tmp_dir/yay-bin"
+    (cd "$tmp_dir/yay-bin" && makepkg -si --noconfirm)
+    rm -rf "$tmp_dir"
+}
+
+update_package_index() {
+    case "$PKG_MANAGER" in
+        apt)
+            write_step "Updating apt package index..."
+            sudo apt-get update
+            ;;
+        dnf)
+            write_step "Updating dnf package index..."
+            sudo dnf makecache
+            ;;
+        pacman)
+            ensure_yay
+            write_step "Syncing pacman package databases..."
+            yay -Sy --noconfirm
+            ;;
+        *)
+            write_warn "No supported package manager found (need apt, dnf, or pacman)."
+            ;;
+    esac
+}
+
+package_installed() {
+    local pkg="$1"
+
+    case "$PKG_MANAGER" in
+        apt) dpkg -s "$pkg" >/dev/null 2>&1 ;;
+        dnf) rpm -q "$pkg" >/dev/null 2>&1 ;;
+        pacman) pacman -Qi "$pkg" >/dev/null 2>&1 ;;
+        *) return 1 ;;
+    esac
+}
+
+install_package() {
     local pkg="$1" name="$2" force="${3:-false}"
 
-    if ! has_command apt-get; then
-        write_warn "apt-get not found; skipping $name."
+    if [ "$PKG_MANAGER" = "unknown" ] || [ -z "$PKG_MANAGER" ]; then
+        write_warn "No supported package manager found; skipping $name."
         return
     fi
 
-    if [ "$force" != "true" ] && apt_package_installed "$pkg"; then
+    if [ -z "$pkg" ]; then
+        write_warn "No package mapping for $name on this distro; skipping."
+        return
+    fi
+
+    if [ "$force" != "true" ] && package_installed "$pkg"; then
         write_skip "$name is already installed."
         return
     fi
 
-    if [ "$force" = "true" ] && apt_package_installed "$pkg"; then
-        write_step "Reinstalling $name..."
-        sudo apt-get install --reinstall -y "$pkg"
-        return
-    fi
-
-    write_step "Installing $name..."
-    sudo apt-get install -y "$pkg"
+    case "$PKG_MANAGER" in
+        apt)
+            if [ "$force" = "true" ] && package_installed "$pkg"; then
+                write_step "Reinstalling $name..."
+                sudo apt-get install --reinstall -y "$pkg"
+            else
+                write_step "Installing $name..."
+                sudo apt-get install -y "$pkg"
+            fi
+            ;;
+        dnf)
+            if [ "$force" = "true" ] && package_installed "$pkg"; then
+                write_step "Reinstalling $name..."
+                sudo dnf reinstall -y "$pkg"
+            else
+                write_step "Installing $name..."
+                sudo dnf install -y "$pkg"
+            fi
+            ;;
+        pacman)
+            ensure_yay
+            write_step "Installing $name..."
+            yay -S --needed --noconfirm "$pkg"
+            ;;
+    esac
 }
 
 backup_file() {

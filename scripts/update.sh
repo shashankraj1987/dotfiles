@@ -2,9 +2,30 @@
 # Linux counterpart to scripts/update.ps1.
 set -euo pipefail
 
-echo "Updating apt packages..."
-sudo apt-get update
-sudo apt-get upgrade -y
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$REPO_ROOT/installers/common.sh"
+detect_package_manager
+
+case "$PKG_MANAGER" in
+    apt)
+        echo "Updating apt packages..."
+        sudo apt-get update
+        sudo apt-get upgrade -y
+        ;;
+    dnf)
+        echo "Updating dnf packages..."
+        sudo dnf upgrade --refresh -y
+        ;;
+    pacman)
+        ensure_yay
+        echo "Updating pacman/AUR packages..."
+        yay -Syu --noconfirm
+        ;;
+    *)
+        echo "No supported package manager found (need apt, dnf, or pacman)." >&2
+        exit 1
+        ;;
+esac
 
 if command -v oh-my-posh > /dev/null 2>&1; then
     echo "Updating Oh My Posh..."

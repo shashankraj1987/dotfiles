@@ -23,13 +23,15 @@ That means the live shell configuration stays in this repository, and future cha
 ## Fresh Machine (Linux)
 
 1. Clone this repository.
-2. Run `./bootstrap.sh` (installs apt packages with `sudo`, so it will prompt for a password).
+2. Run `./bootstrap.sh` (installs packages with `sudo`, so it will prompt for a password).
 3. Restart your terminal, or run `exec zsh`.
 4. Run `./scripts/verify.sh`.
 
+Supports Debian/Ubuntu (`apt`), Fedora (`dnf`), and Arch (`pacman`/`yay`) — see "Linux Config Parity" below.
+
 ### How It Works
 
-`bootstrap.sh` loads installer files from `installers/` (`common.sh`, `packages.sh`, `zsh.sh`, `git.sh`). Each installer registers a step with `register_step`, and `invoke_steps` runs them in order.
+`bootstrap.sh` loads installer files from `installers/` (`common.sh`, `packages.sh`, `zsh.sh`, `git.sh`). Each installer registers a step with `register_step`, and `invoke_steps` runs them in order. Before any steps run, `bootstrap.sh` calls `detect_package_manager` (in `common.sh`) to pick `apt`, `dnf`, or `pacman` based on what's on `PATH`, and aborts if none of the three is found.
 
 The `zsh` step installs `zsh` and [Oh My Zsh](https://ohmyz.sh) first if either is missing (using Oh My Zsh's official unattended installer with `--keep-zshrc`, so it never overwrites an existing `~/.zshrc`), sets `zsh` as your default shell if it isn't already, and then appends a marker-delimited block to `~/.zshrc`:
 
@@ -45,10 +47,12 @@ Re-running the bootstrap replaces only the content between those markers, so Oh 
 
 ### Linux Config Parity
 
-`.my_config.zsh` is the single source of truth for base zsh behavior on Linux (history, completion, keybindings, core aliases), and Oh My Zsh remains the shell framework — the bootstrap never replaces its `~/.zshrc`, only appends to it. `installers/packages.sh` installs the CLI tools `.my_config.zsh` and `profile.zsh` expect via `apt`:
+`.my_config.zsh` is the single source of truth for base zsh behavior on Linux (history, completion, keybindings, core aliases), and Oh My Zsh remains the shell framework — the bootstrap never replaces its `~/.zshrc`, only appends to it. `installers/packages.sh` installs the CLI tools `.my_config.zsh` and `profile.zsh` expect, through whichever package manager `detect_package_manager` found:
 
-- `eza`, `bat`, `fd-find` (binary `fdfind` on Debian/Ubuntu), `ripgrep`, `zoxide`, `fzf` via `apt`.
-- `oh-my-posh` via its official install script (not packaged for apt).
-- `bottom` (`btm`) via the latest GitHub release `.deb` (not packaged for apt).
+- `eza`, `bat` (binary `batcat` on Debian/Ubuntu), `fd`/`fd-find` (binary `fdfind` on Debian/Ubuntu), `ripgrep`, `zoxide`, `fzf` — via `apt`, `dnf`, or `pacman`/`yay`, per the `name:apt:dnf:pacman` table in `installers/packages.sh`.
+- `oh-my-posh` via its official install script (not packaged anywhere).
+- `bottom` (`btm`) — via `pacman`/`yay` on Arch (it's in the official repos there); via the latest GitHub release `.deb` on `apt`; via the release tarball dropped into `~/.local/bin` on `dnf`.
+
+On Arch-based systems, `yay` is bootstrapped automatically the first time a package needs installing (`ensure_yay` in `installers/common.sh` builds `yay-bin` from the AUR via `makepkg`) since it's never preinstalled.
 
 Git config (`config/git/gitconfig.linux`) is available but, like the Windows side, only applied with `--force` since it overwrites `~/.gitconfig`.

@@ -36,7 +36,8 @@ ensure_default_shell_zsh() {
 step_zsh() {
     local force="$1"
 
-    install_apt_package "zsh" "zsh" "$force"
+    detect_package_manager
+    install_package "zsh" "zsh" "$force"
     install_oh_my_zsh "$force"
     ensure_default_shell_zsh
 
