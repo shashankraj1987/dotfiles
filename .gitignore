@@ -1,0 +1,13 @@
+# AI tool credentials and runtime state must never enter the dotfiles repo.
+config/ai/**/auth.json
+config/ai/**/.credentials.json
+config/ai/**/credentials.json
+config/ai/**/history.jsonl
+config/ai/**/sessions/
+config/ai/**/projects/
+config/ai/**/logs/
+config/ai/**/*.sqlite*
+config/ai/**/cache/
+config/ai/**/.tmp/
+config/ai/**/*.dotfiles-backup-*
+

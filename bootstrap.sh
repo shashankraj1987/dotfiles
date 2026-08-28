@@ -5,12 +5,14 @@ set -euo pipefail
 FORCE=false
 SKIP_PACKAGES=false
 SKIP_ZSH=false
+RESTORE_AI=false
 
 for arg in "$@"; do
     case "$arg" in
         --force) FORCE=true ;;
         --skip-packages) SKIP_PACKAGES=true ;;
         --skip-zsh) SKIP_ZSH=true ;;
+        --restore-ai) RESTORE_AI=true ;;
         *)
             echo "Unknown option: $arg" >&2
             exit 1
@@ -40,6 +42,12 @@ $SKIP_PACKAGES && disable_step "packages"
 $SKIP_ZSH && disable_step "zsh"
 
 invoke_steps "$FORCE"
+
+if $RESTORE_AI; then
+    ai_args=()
+    $FORCE && ai_args+=(--force)
+    "$REPO_ROOT/scripts/restore-ai.sh" "${ai_args[@]}"
+fi
 
 echo ""
 write_success "Bootstrap complete."
