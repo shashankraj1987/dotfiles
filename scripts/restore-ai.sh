@@ -61,8 +61,10 @@ install_tree() {
 
 if selected codex; then
     install_file "$AI_ROOT/codex/config.toml.tmpl" "$HOME/.codex/config.toml" true
+    install_file "$AI_ROOT/codex/common/AGENTS.md" "$HOME/.codex/AGENTS.md"
     install_tree "$AI_ROOT/codex/common/rules" "$HOME/.codex/rules"
     install_tree "$AI_ROOT/codex/common/skills" "$HOME/.codex/skills"
+    install_tree "$AI_ROOT/codex/common/memories" "$HOME/.codex/memories"
     install_tree "$AI_ROOT/codex/linux/rules" "$HOME/.codex/rules"
 fi
 

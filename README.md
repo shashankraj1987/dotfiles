@@ -12,9 +12,9 @@ Run the bootstrap entry point from PowerShell 7:
 pwsh -ExecutionPolicy Bypass -File .\bootstrap.ps1
 ```
 
-Add `-RestoreAISettings` to restore the tracked Codex, Claude Code, Copilot,
-Gemini, and OpenCode settings from this repo. Authentication is intentionally
-excluded.
+Portable AI settings and projects from the tracked manifest are restored by
+default. Authentication is intentionally excluded. Use `-SkipAISettings` or
+`-SkipProjects` to opt out.
 
 After it finishes, restart PowerShell and verify the environment:
 
@@ -30,14 +30,93 @@ Run the bootstrap entry point from bash:
 ./bootstrap.sh
 ```
 
-Add `--restore-ai` to restore the tracked AI-tool settings. Authentication is
-intentionally excluded.
+Portable AI settings and projects from the tracked manifest are restored by
+default. Authentication is intentionally excluded. Use `--skip-ai` or
+`--skip-projects` to opt out.
 
 After it finishes, restart your terminal (or run `exec zsh`) and verify the environment:
 
 ```bash
 ./scripts/verify.sh
 ```
+
+## Fedora-to-Windows migration
+
+This repository recreates the portable developer environment rather than
+copying Fedora itself. It can transfer:
+
+- shell, Git, terminal, and supported command-line tool configuration;
+- Codex, Claude Code, GitHub Copilot CLI, Gemini CLI, and OpenCode settings;
+- Codex global guidance, user-created skills, rules, and optional file-based
+  memories;
+- the list of Git projects to clone; and
+- project-specific AI guidance committed inside each project's repository,
+  including `AGENTS.md`, `CLAUDE.md`, `.codex/config.toml`, and
+  `.github/copilot-instructions.md`.
+
+### 1. Prepare and push from Fedora
+
+Refresh the portable AI snapshot and project manifest:
+
+```bash
+./scripts/backup-ai.sh
+./scripts/backup-projects.sh
+```
+
+The current Fedora `~/git_apps` directory contains active projects as well as a
+recovered `windows_git_apps` tree. Review `config/projects/projects.tsv` and
+remove duplicate, archived, or unwanted repositories before committing it.
+Also inspect every reported dirty repository: uncommitted and untracked files
+cannot be recreated from a Git remote.
+
+Review the complete dotfiles change before pushing:
+
+```bash
+git status --short
+git diff
+git add README.md config/ai config/projects scripts bootstrap.sh bootstrap.ps1 .gitignore
+git commit -m "Prepare portable developer environment"
+git push
+```
+
+Do not commit credentials, private `.env` files, SSH private keys, login state,
+or generated chat/session databases. Move those through a password manager,
+secret manager, or encrypted backup.
+
+### 2. Restore on Windows
+
+Install Git and PowerShell 7, clone this repository, and optionally choose where
+project repositories should be created:
+
+```powershell
+$env:DOTFILES_PROJECTS_ROOT = "D:/git_apps"
+pwsh -ExecutionPolicy Bypass -File .\bootstrap.ps1
+```
+
+Without `DOTFILES_PROJECTS_ROOT`, projects are cloned under `~/git_apps`.
+Bootstrap restores portable AI settings and clones missing manifest projects by
+default. Existing AI files and project directories are preserved unless
+`-Force` is supplied for supported settings.
+
+Restart PowerShell, run the verification script, and sign in to each AI tool:
+
+```powershell
+.\scripts\verify.ps1
+```
+
+If a project remote uses an SSH alias such as
+`git@work-alias:owner/repository.git`, recreate the corresponding
+`~/.ssh/config` entry and install its private key securely before bootstrap, or
+replace the alias with a canonical hostname in the manifest.
+
+### 3. Transfer non-dotfile data separately
+
+This repository is not a whole-machine backup. Use an encrypted, versioned
+backup for documents, media, browser profiles, application data, containers,
+VMs, Fedora system state, uncommitted project files, and other personal data.
+AI authentication and generated Codex memory/session SQLite databases are also
+excluded. Required long-term AI knowledge should live in tracked `AGENTS.md`
+files or project documentation.
 
 ## Layout
 
@@ -57,6 +136,7 @@ dotfiles/
 │   └── fonts.ps1
 ├── config/
 │   ├── ai/
+│   ├── projects/
 │   ├── powershell/
 │   ├── oh-my-posh/
 │   ├── windows-terminal/
@@ -75,23 +155,24 @@ shown below.
 ### Windows bootstrap
 
 ```powershell
-.\bootstrap.ps1 [-Force] [-SkipPackages] [-SkipPowerShell] [-RestoreAISettings]
+.\bootstrap.ps1 [-Force] [-SkipPackages] [-SkipPowerShell] [-SkipAISettings] [-SkipProjects]
 ```
 
 | Option | Effect |
 | --- | --- |
-| none | Install missing Winget packages and configure PowerShell, Git, Windows Terminal, and fonts. |
+| none | Install packages/configuration, restore portable AI settings, and clone missing manifest projects. |
 | `-Force` | Reinstall/refresh packages and replace generated configuration where supported. Git configuration is only applied in this mode. |
 | `-SkipPackages` | Skip the Winget package-installation step. |
 | `-SkipPowerShell` | Skip PowerShell profile and module configuration. |
-| `-RestoreAISettings` | Restore all tracked AI-tool settings after bootstrap. Existing AI settings are skipped unless `-Force` is also supplied. |
+| `-SkipAISettings` | Do not restore tracked AI-tool settings. |
+| `-SkipProjects` | Do not clone projects from `config/projects/projects.tsv`. |
 
 Examples:
 
 ```powershell
 .\bootstrap.ps1
-.\bootstrap.ps1 -SkipPackages -RestoreAISettings
-.\bootstrap.ps1 -Force -RestoreAISettings
+.\bootstrap.ps1 -SkipPackages
+.\bootstrap.ps1 -Force
 ```
 
 `setup-dev-tools.ps1 [-Force]` is retained as a compatibility wrapper around
@@ -100,23 +181,24 @@ Examples:
 ### Linux bootstrap
 
 ```bash
-./bootstrap.sh [--force] [--skip-packages] [--skip-zsh] [--restore-ai]
+./bootstrap.sh [--force] [--skip-packages] [--skip-zsh] [--skip-ai] [--skip-projects]
 ```
 
 | Option | Effect |
 | --- | --- |
-| none | Install missing packages and configure zsh and Git using the detected `apt`, `dnf`, or `pacman`/`yay` package manager. |
+| none | Install packages/configuration, restore portable AI settings, and clone missing manifest projects. |
 | `--force` | Reinstall/refresh packages and replace generated configuration where supported. Git configuration is only applied in this mode. |
 | `--skip-packages` | Skip the package-installation step. |
 | `--skip-zsh` | Skip zsh, Oh My Zsh, and `.zshrc` integration. |
-| `--restore-ai` | Restore all tracked AI-tool settings after bootstrap. Existing AI settings are skipped unless `--force` is also supplied. |
+| `--skip-ai` | Do not restore tracked AI-tool settings. |
+| `--skip-projects` | Do not clone projects from `config/projects/projects.tsv`. |
 
 Examples:
 
 ```bash
 ./bootstrap.sh
-./bootstrap.sh --skip-packages --restore-ai
-./bootstrap.sh --force --restore-ai
+./bootstrap.sh --skip-packages
+./bootstrap.sh --force
 ```
 
 ### AI settings backup
@@ -125,11 +207,11 @@ Backup refreshes the Git-trackable snapshot under `config/ai/` from the current
 computer. The default tool set is `codex,claude,copilot,gemini,opencode`.
 
 ```bash
-./scripts/backup-ai.sh [--tools TOOL1,TOOL2]
+./scripts/backup-ai.sh [--tools TOOL1,TOOL2] [--include-memories]
 ```
 
 ```powershell
-.\scripts\backup-ai.ps1 [-Tools TOOL1,TOOL2]
+.\scripts\backup-ai.ps1 [-Tools TOOL1,TOOL2] [-IncludeMemories]
 ```
 
 | Option | Effect |
@@ -137,6 +219,7 @@ computer. The default tool set is `codex,claude,copilot,gemini,opencode`.
 | none | Back up portable settings for every supported tool found on the computer. Missing tools are skipped. |
 | `--tools LIST` | Linux: back up only the comma-separated tool names in `LIST`. |
 | `-Tools LIST` | PowerShell: back up only the supplied tool-name array. |
+| `--include-memories` / `-IncludeMemories` | Also copy file-based Codex memories after secret checks; generated SQLite stores remain excluded. |
 
 Examples:
 
@@ -152,6 +235,41 @@ The backup is allowlisted: it excludes authentication, API keys, histories,
 sessions, logs, caches, databases, downloaded system skills, and generated app
 profiles. It stops if a selected declarative file looks as though it contains a
 credential. Always inspect `git diff -- config/ai` before committing.
+
+### Projects and project memory
+
+Project source code should remain in each project's own Git repository. This
+dotfiles repository stores only a clone manifest, so a new Windows or Linux
+machine can recreate the same workspace without duplicating source trees here.
+
+Generate or refresh the manifest from the default `~/git_apps` directory:
+
+```bash
+./scripts/backup-projects.sh
+```
+
+```powershell
+.\scripts\backup-projects.ps1
+```
+
+Use `--root PATH` or `-Root PATH` for a different source directory. On restore,
+set `DOTFILES_PROJECTS_ROOT` when projects should live somewhere other than
+`~/git_apps` (for example `D:/git_apps` on Windows). Bootstrap automatically
+clones missing entries from `config/projects/projects.tsv`; existing directories
+are never overwritten.
+
+The manifest transfers committed Git content only. Before moving machines,
+commit and push each project's durable AI context—especially `AGENTS.md`,
+`CLAUDE.md`, `.codex/config.toml`, `.github/copilot-instructions.md`, and project
+documentation—to that project's repository. The backup command warns about
+dirty repositories because uncommitted and untracked files cannot be recreated
+from a remote.
+
+Review the manifest before committing it: remote URLs and private repository
+names may be sensitive even when they contain no password or token. Remotes
+that use SSH host aliases (for example `git@work-alias:owner/repo.git`) also
+require a matching `~/.ssh/config` entry and private key on the new machine;
+prefer canonical hostnames in the manifest or restore those separately.
 
 ### AI settings restore
 
@@ -197,8 +315,8 @@ the commit/push workflow.
 Use the following source order on a new computer:
 
 1. Clone this repository for portable shell and AI-tool settings.
-2. Run the bootstrap with `--restore-ai` on Linux or `-RestoreAISettings` on
-   Windows.
+2. Run the bootstrap; portable AI settings and manifest projects restore by
+   default on both operating systems.
 3. Sign in to each AI provider again; do not copy authentication files through
    Git.
 4. Retrieve private environment-variable values from your password manager,
@@ -215,6 +333,15 @@ Use the following source order on a new computer:
 | AI login sessions | The corresponding OpenAI, Anthropic, GitHub, Google, or model-provider account | Created locally when you sign in again. |
 | API keys and secret environment variables | Password manager, approved secret manager, or encrypted offline backup | User environment, a private shell file, or a project-local `.env`; never `config/ai/`. |
 | Project-specific variables | The project's `.env.example`/README plus its secret-manager entry | The project's untracked `.env` or platform deployment settings. |
+
+### What this does not transfer
+
+A Git dotfiles repository is not a whole-machine backup. It deliberately does
+not transfer documents, media, browser profiles, installed application data,
+Windows registry state, Fedora system state, containers/VMs, credentials,
+uncommitted project files, or AI chat/session databases. Use an encrypted,
+versioned backup tool for those files and a password manager for secrets. This
+separation keeps a leaked dotfiles repository from becoming a leaked machine.
 
 The initial AI snapshot in this repository was selected from these locations on
 the restored Linux machine:

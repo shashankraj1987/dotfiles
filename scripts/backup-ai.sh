@@ -4,6 +4,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AI_ROOT="$REPO_ROOT/config/ai"
 TOOLS="codex,claude,copilot,gemini,opencode"
+INCLUDE_MEMORIES=false
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -12,6 +13,7 @@ while [ "$#" -gt 0 ]; do
             TOOLS="$2"
             shift
             ;;
+        --include-memories) INCLUDE_MEMORIES=true ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
     shift
@@ -84,9 +86,13 @@ backup_codex_config() {
 
 if selected codex; then
     backup_codex_config
+    copy_file "$HOME/.codex/AGENTS.md" "$AI_ROOT/codex/common/AGENTS.md"
     copy_tree "$HOME/.codex/rules" "$AI_ROOT/codex/linux/rules"
     if [ -d "$HOME/.codex/skills" ]; then
         copy_tree "$HOME/.codex/skills" "$AI_ROOT/codex/common/skills"
+    fi
+    if $INCLUDE_MEMORIES; then
+        copy_tree "$HOME/.codex/memories" "$AI_ROOT/codex/common/memories"
     fi
 fi
 

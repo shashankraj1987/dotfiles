@@ -5,7 +5,9 @@ param(
     [switch]$Force,
     [switch]$SkipPackages,
     [switch]$SkipPowerShell,
-    [switch]$RestoreAISettings
+    [switch]$RestoreAISettings,
+    [switch]$SkipAISettings,
+    [switch]$SkipProjects
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,8 +38,12 @@ Invoke-BootstrapSteps -Context @{
     Force = [bool]$Force
 }
 
-if ($RestoreAISettings) {
+if (-not $SkipAISettings) {
     & (Join-Path $RepoRoot "scripts/restore-ai.ps1") -Force:$Force
+}
+
+if (-not $SkipProjects) {
+    & (Join-Path $RepoRoot "scripts/restore-projects.ps1")
 }
 
 Write-Host ""

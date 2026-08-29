@@ -1,7 +1,10 @@
 #Requires -Version 7.0
 
 [CmdletBinding()]
-param([string[]]$Tools = @("codex", "claude", "copilot", "gemini", "opencode"))
+param(
+    [string[]]$Tools = @("codex", "claude", "copilot", "gemini", "opencode"),
+    [switch]$IncludeMemories
+)
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
@@ -80,8 +83,14 @@ function Backup-CodexConfig {
 
 if (Test-Selected "codex") {
     Backup-CodexConfig
+    Copy-SettingsFile -Source (Join-Path $HOME ".codex/AGENTS.md") `
+        -Target (Join-Path $AiRoot "codex/common/AGENTS.md")
     Copy-SettingsTree -Source (Join-Path $HOME ".codex/rules") -Target (Join-Path $AiRoot "codex/windows/rules")
     Copy-SettingsTree -Source (Join-Path $HOME ".codex/skills") -Target (Join-Path $AiRoot "codex/common/skills")
+    if ($IncludeMemories) {
+        Copy-SettingsTree -Source (Join-Path $HOME ".codex/memories") `
+            -Target (Join-Path $AiRoot "codex/common/memories")
+    }
 }
 
 if (Test-Selected "claude") {

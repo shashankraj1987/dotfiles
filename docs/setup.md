@@ -4,7 +4,8 @@
 
 1. Install PowerShell 7 if it is not already available.
 2. Clone this repository.
-3. Run `pwsh -ExecutionPolicy Bypass -File .\bootstrap.ps1`.
+3. Optionally generate and commit `config/projects/projects.tsv` on the old
+   machine, then run `pwsh -ExecutionPolicy Bypass -File .\bootstrap.ps1`.
 4. Restart PowerShell.
 5. Run `.\scripts\verify.ps1`.
 
@@ -23,7 +24,9 @@ That means the live shell configuration stays in this repository, and future cha
 ## Fresh Machine (Linux)
 
 1. Clone this repository.
-2. Run `./bootstrap.sh` (installs packages with `sudo`, so it will prompt for a password).
+2. Optionally generate and commit `config/projects/projects.tsv` on the old
+   machine, then run `./bootstrap.sh` (installs packages with `sudo`, so it will
+   prompt for a password).
 3. Restart your terminal, or run `exec zsh`.
 4. Run `./scripts/verify.sh`.
 

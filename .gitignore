@@ -10,4 +10,5 @@ config/ai/**/*.sqlite*
 config/ai/**/cache/
 config/ai/**/.tmp/
 config/ai/**/*.dotfiles-backup-*
-
+config/ai/codex/common/memories/**/*.sqlite*
+config/projects/**/*.dotfiles-backup-*

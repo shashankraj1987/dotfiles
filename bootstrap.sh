@@ -5,14 +5,17 @@ set -euo pipefail
 FORCE=false
 SKIP_PACKAGES=false
 SKIP_ZSH=false
-RESTORE_AI=false
+RESTORE_AI=true
+RESTORE_PROJECTS=true
 
 for arg in "$@"; do
     case "$arg" in
         --force) FORCE=true ;;
         --skip-packages) SKIP_PACKAGES=true ;;
         --skip-zsh) SKIP_ZSH=true ;;
-        --restore-ai) RESTORE_AI=true ;;
+        --restore-ai) RESTORE_AI=true ;; # retained for compatibility; now the default
+        --skip-ai) RESTORE_AI=false ;;
+        --skip-projects) RESTORE_PROJECTS=false ;;
         *)
             echo "Unknown option: $arg" >&2
             exit 1
@@ -47,6 +50,10 @@ if $RESTORE_AI; then
     ai_args=()
     $FORCE && ai_args+=(--force)
     "$REPO_ROOT/scripts/restore-ai.sh" "${ai_args[@]}"
+fi
+
+if $RESTORE_PROJECTS; then
+    "$REPO_ROOT/scripts/restore-projects.sh"
 fi
 
 echo ""
