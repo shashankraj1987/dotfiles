@@ -31,14 +31,20 @@ enabled = true
 [plugins."chrome@openai-bundled"]
 enabled = true
 
+[plugins."codex-app-tools@openai-bundled"]
+enabled = true
+
 [features]
 js_repl = false
 
 [mcp_servers.openaiDeveloperDocs]
 url = "https://developers.openai.com/mcp"
 
+[mcp_servers.cua_repl]
+command = "/usr/lib/chatgpt/ChatGPT"
+enabled = false
+
 [desktop]
 open-link-in-target-preference = "external-browser"
 open-local-url-in-target-preference = "external-browser"
 followUpQueueMode = "queue"
-
