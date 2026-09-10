@@ -53,10 +53,12 @@ dotfiles/
 │   ├── winget.ps1 / packages.sh
 │   ├── powershell.ps1 / zsh.sh
 │   ├── git.ps1 / git.sh
+│   ├── systemd-logind.sh
 │   ├── terminal.ps1
 │   └── fonts.ps1
 ├── config/
 │   ├── ai/
+│   ├── linux/systemd/
 │   ├── powershell/
 │   ├── oh-my-posh/
 │   ├── windows-terminal/
@@ -100,7 +102,7 @@ Examples:
 ### Linux bootstrap
 
 ```bash
-./bootstrap.sh [--force] [--skip-packages] [--skip-zsh] [--restore-ai]
+./bootstrap.sh [--force] [--skip-packages] [--skip-zsh] [--restore-ai] [--ignore-lid-switch]
 ```
 
 | Option | Effect |
@@ -110,14 +112,103 @@ Examples:
 | `--skip-packages` | Skip the package-installation step. |
 | `--skip-zsh` | Skip zsh, Oh My Zsh, and `.zshrc` integration. |
 | `--restore-ai` | Restore all tracked AI-tool settings after bootstrap. Existing AI settings are skipped unless `--force` is also supplied. |
+| `--ignore-lid-switch` | Keep a GNOME laptop awake by ignoring lid-close events and disabling GNOME automatic suspend on AC and battery power. Installing the systemd-logind drop-in requires `sudo` and may interrupt the current desktop session. |
 
 Examples:
 
 ```bash
 ./bootstrap.sh
 ./bootstrap.sh --skip-packages --restore-ai
+./bootstrap.sh --ignore-lid-switch
 ./bootstrap.sh --force --restore-ai
 ```
+
+### Optional keep-awake behavior
+
+Linux systems using systemd normally suspend or take another configured action
+when the laptop lid closes. GNOME can also suspend the computer after its idle
+timeout independently of the lid action. To keep the laptop awake in both
+cases, run:
+
+```bash
+./bootstrap.sh --ignore-lid-switch
+```
+
+This installs the tracked
+`config/linux/systemd/logind.conf.d/lid.conf` file as
+`/etc/systemd/logind.conf.d/lid.conf` with these settings:
+
+```ini
+[Login]
+HandleLidSwitch=ignore
+HandleLidSwitchExternalPower=ignore
+HandleLidSwitchDocked=ignore
+```
+
+When GNOME power settings are available, the same option also applies these
+per-user settings for the account running bootstrap:
+
+```bash
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type 'nothing'
+gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type 'nothing'
+```
+
+This disables automatic idle suspension but leaves manual suspend available.
+On systems without GNOME, this part is skipped. Administratively locked GNOME
+settings are reported and left unchanged.
+
+The option is disabled by default and requires `sudo`. If the destination file
+already differs, bootstrap creates a timestamped backup before replacing it.
+If the systemd drop-in is already current, bootstrap does not reinstall it or
+restart the service. After a systemd configuration change, bootstrap restarts
+`systemd-logind`; this may interrupt the current graphical desktop session, so
+save your work before enabling it.
+
+Verify the effective logind values after installation:
+
+```bash
+for property in \
+  HandleLidSwitch \
+  HandleLidSwitchExternalPower \
+  HandleLidSwitchDocked
+do
+  busctl get-property \
+    org.freedesktop.login1 \
+    /org/freedesktop/login1 \
+    org.freedesktop.login1.Manager \
+    "$property"
+done
+```
+
+Each value should be `s "ignore"`. Verify the GNOME idle actions separately:
+
+```bash
+gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type
+gsettings get org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type
+```
+
+Both values should be `'nothing'`. Closing the lid should then produce a
+`Lid closed` journal entry without a following `Suspending` entry. Manual
+suspend continues to work.
+
+To remove the systemd override, delete the installed drop-in and restart
+logind. If bootstrap created a timestamped backup of a pre-existing `lid.conf`,
+restore that backup instead of deleting the file.
+
+```bash
+sudo rm /etc/systemd/logind.conf.d/lid.conf
+sudo systemctl restart systemd-logind.service
+```
+
+To restore GNOME's default automatic-suspend policy later, run:
+
+```bash
+gsettings reset org.gnome.settings-daemon.plugins.power sleep-inactive-ac-type
+gsettings reset org.gnome.settings-daemon.plugins.power sleep-inactive-battery-type
+```
+
+The systemd restart can interrupt the graphical session during rollback too.
+Save your work first.
 
 ### AI settings backup
 

@@ -27,11 +27,25 @@ That means the live shell configuration stays in this repository, and future cha
 3. Restart your terminal, or run `exec zsh`.
 4. Run `./scripts/verify.sh`.
 
+To additionally keep a GNOME laptop awake when its lid is closed, run
+`./bootstrap.sh --ignore-lid-switch`. This behavior is opt-in.
+
 Supports Debian/Ubuntu (`apt`), Fedora (`dnf`), and Arch (`pacman`/`yay`) — see "Linux Config Parity" below.
 
 ### How It Works
 
-`bootstrap.sh` loads installer files from `installers/` (`common.sh`, `packages.sh`, `zsh.sh`, `git.sh`). Each installer registers a step with `register_step`, and `invoke_steps` runs them in order. Before any steps run, `bootstrap.sh` calls `detect_package_manager` (in `common.sh`) to pick `apt`, `dnf`, or `pacman` based on what's on `PATH`, and aborts if none of the three is found.
+`bootstrap.sh` loads installer files from `installers/` (`common.sh`, `packages.sh`, `zsh.sh`, `git.sh`, `systemd-logind.sh`). Each installer registers a step with `register_step`, and `invoke_steps` runs them in order. Before any steps run, `bootstrap.sh` calls `detect_package_manager` (in `common.sh`) to pick `apt`, `dnf`, or `pacman` based on what's on `PATH`, and aborts if none of the three is found.
+
+The `systemd_logind` step is disabled by default. Pass `--ignore-lid-switch` to
+install `config/linux/systemd/logind.conf.d/lid.conf` at
+`/etc/systemd/logind.conf.d/lid.conf`. A differing existing file is backed up
+before replacement. The step restarts `systemd-logind` after a change, which
+may interrupt the current desktop session. When GNOME power settings are
+available, the step also sets both AC and battery idle actions to `nothing` for
+the user running bootstrap. This prevents GNOME's independent idle timer from
+suspending the laptop while leaving manual suspend available. Verification and
+rollback commands are documented in the main README under
+[Optional keep-awake behavior](../README.md#optional-keep-awake-behavior).
 
 The `zsh` step installs `zsh` and [Oh My Zsh](https://ohmyz.sh) first if either is missing (using Oh My Zsh's official unattended installer with `--keep-zshrc`, so it never overwrites an existing `~/.zshrc`), sets `zsh` as your default shell if it isn't already, and then appends a marker-delimited block to `~/.zshrc`:
 

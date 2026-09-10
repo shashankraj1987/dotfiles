@@ -6,6 +6,7 @@ FORCE=false
 SKIP_PACKAGES=false
 SKIP_ZSH=false
 RESTORE_AI=false
+IGNORE_LID_SWITCH=false
 
 for arg in "$@"; do
     case "$arg" in
@@ -13,6 +14,7 @@ for arg in "$@"; do
         --skip-packages) SKIP_PACKAGES=true ;;
         --skip-zsh) SKIP_ZSH=true ;;
         --restore-ai) RESTORE_AI=true ;;
+        --ignore-lid-switch) IGNORE_LID_SWITCH=true ;;
         *)
             echo "Unknown option: $arg" >&2
             exit 1
@@ -37,9 +39,11 @@ write_step "Detected package manager: $PKG_MANAGER"
 source "$INSTALLER_ROOT/packages.sh"
 source "$INSTALLER_ROOT/zsh.sh"
 source "$INSTALLER_ROOT/git.sh"
+source "$INSTALLER_ROOT/systemd-logind.sh"
 
 $SKIP_PACKAGES && disable_step "packages"
 $SKIP_ZSH && disable_step "zsh"
+$IGNORE_LID_SWITCH || disable_step "systemd_logind"
 
 invoke_steps "$FORCE"
 
