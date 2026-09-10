@@ -7,8 +7,8 @@ databases, downloaded plugins, and machine-generated application profiles.
 ## Included snapshot
 
 - Codex: model, reasoning level, theme, enabled plugins, feature flags, the
-  OpenAI documentation MCP endpoint, desktop preferences, and restored Linux
-  command rules.
+  OpenAI documentation MCP endpoint, desktop preferences, global `AGENTS.md`,
+  user-created skills, and operating-system-specific command rules.
 - Claude Code: user settings restored from the previous backup.
 - GitHub Copilot CLI: supported by the scripts when `~/.copilot/settings.json`
   exists. The current `config.json` only contains generated first-launch state,
@@ -28,6 +28,7 @@ Linux:
 
 ```bash
 ./scripts/backup-ai.sh
+./scripts/backup-ai.sh --include-memories
 ./scripts/restore-ai.sh
 ./scripts/restore-ai.sh --tools codex,claude --force
 ```
@@ -36,6 +37,7 @@ Windows (PowerShell 7):
 
 ```powershell
 .\scripts\backup-ai.ps1
+.\scripts\backup-ai.ps1 -IncludeMemories
 .\scripts\restore-ai.ps1
 .\scripts\restore-ai.ps1 -Tools codex,claude -Force
 ```
@@ -46,6 +48,13 @@ each replaced file is copied to a timestamped `*.dotfiles-backup-*` file first.
 The backup scripts only copy known declarative files and user-created content.
 They refuse files that look as though they contain credentials. Review
 `git diff -- config/ai` before committing every refresh.
+
+Codex local memories are generated state. Required guidance belongs in the
+tracked global `config/ai/codex/common/AGENTS.md` or in each project's own
+checked-in `AGENTS.md`. `--include-memories` / `-IncludeMemories` copies only a
+file-based `~/.codex/memories/` directory when one exists, and remains opt-in
+because it may contain private project context. SQLite memory/session databases
+are never copied. Review every memory file before committing it.
 
 Environment variables and login credentials are not an input to these restore
 scripts. On a new computer, obtain secret values from the password manager,

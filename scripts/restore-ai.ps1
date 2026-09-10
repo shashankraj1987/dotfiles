@@ -60,10 +60,14 @@ function Install-SettingsTree {
 if (Test-Selected "codex") {
     Install-SettingsFile -Source (Join-Path $AiRoot "codex/config.toml.tmpl") `
         -Target (Join-Path $HOME ".codex/config.toml") -Template
+    Install-SettingsFile -Source (Join-Path $AiRoot "codex/common/AGENTS.md") `
+        -Target (Join-Path $HOME ".codex/AGENTS.md")
     Install-SettingsTree -Source (Join-Path $AiRoot "codex/common/rules") `
         -Target (Join-Path $HOME ".codex/rules")
     Install-SettingsTree -Source (Join-Path $AiRoot "codex/common/skills") `
         -Target (Join-Path $HOME ".codex/skills")
+    Install-SettingsTree -Source (Join-Path $AiRoot "codex/common/memories") `
+        -Target (Join-Path $HOME ".codex/memories")
     Install-SettingsTree -Source (Join-Path $AiRoot "codex/windows/rules") `
         -Target (Join-Path $HOME ".codex/rules")
 }
