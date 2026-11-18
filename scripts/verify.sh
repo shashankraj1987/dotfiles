@@ -13,7 +13,6 @@ checks=(
     "zoxide:zoxide"
     "fzf:fzf"
     "bottom:btm"
-    "oh-my-posh:oh-my-posh"
 )
 
 for entry in "${checks[@]}"; do

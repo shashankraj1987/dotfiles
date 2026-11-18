@@ -481,7 +481,7 @@ These commands have no options:
 
 | Windows | Linux | Purpose |
 | --- | --- | --- |
-| `.\scripts\update.ps1` | `./scripts/update.sh` | Upgrade installed packages. Linux also upgrades Oh My Posh and reports an outdated `asusctl` when present. |
+| `.\scripts\update.ps1` | `./scripts/update.sh` | Upgrade installed packages. Linux also reports an outdated `asusctl` when present. |
 | `.\scripts\verify.ps1` | `./scripts/verify.sh` | Report whether expected command-line tools are installed. |
 | `.\scripts\cleanup.ps1` | `./scripts/cleanup.sh` | Placeholder; no cleanup tasks are configured yet. |
 
@@ -491,4 +491,4 @@ The Windows bootstrap replaces the user PowerShell profile with a small loader t
 
 ## zsh Profile
 
-The Linux bootstrap appends a marker-delimited block to `~/.zshrc` (leaving Oh My Zsh and everything else untouched) that sources `profile.zsh`. `profile.zsh` sources `.my_config.zsh` — the base zsh options, aliases, completion, and keybindings — then layers on the same modern-CLI integrations as `profile.ps1` (eza, zoxide, Oh My Posh, fzf) when those tools are installed.
+The Linux bootstrap installs Oh My Zsh and appends a marker-delimited block to `~/.zshrc` that sources `profile.zsh`. `profile.zsh` sources `.my_config.zsh` — the base zsh options, aliases, completion, and keybindings — then adds eza, zoxide, and fzf integration when those tools are installed. Windows installs Oh My Posh and loads its tracked theme from `profile.ps1`.
