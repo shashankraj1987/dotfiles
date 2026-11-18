@@ -120,6 +120,10 @@ files or project documentation.
 
 ## Layout
 
+For a step-by-step account of bootstrap behavior, auxiliary scripts, and
+current platform boundaries, see [the application workflow and feature
+inventory](docs/application-workflow.md).
+
 ```text
 dotfiles/
 ├── bootstrap.ps1
