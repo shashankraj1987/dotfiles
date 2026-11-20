@@ -21,6 +21,17 @@ The PowerShell installer replaces the user profile with a loader:
 
 That means the live shell configuration stays in this repository, and future changes apply after pulling the repo and restarting PowerShell.
 
+The Windows package step installs Oh My Posh through Winget. The profile loads
+its tracked theme before initializing zoxide.
+
+Zoxide records a directory when a PowerShell prompt appears after a directory
+change (`cd`, `Set-Location`, or `z`). Its initialization in `profile.ps1` must
+come after Oh My Posh, which also defines the prompt. Zoxide does not import
+previous PowerShell directory history or track changes made in File Explorer.
+After restarting PowerShell, visit directories normally to build its database.
+Check that the hook loaded with `(Get-Command prompt).Definition.Contains("__zoxide_hook")`
+and inspect recorded paths with `zoxide query --list`.
+
 ## Fresh Machine (Linux)
 
 1. Clone this repository.
@@ -60,14 +71,13 @@ The `zsh` step installs `zsh` and [Oh My Zsh](https://ohmyz.sh) first if either 
 
 Re-running the bootstrap replaces only the content between those markers, so Oh My Zsh and any other existing `~/.zshrc` content is left alone (a timestamped backup is taken before the first edit and before any content change).
 
-`profile.zsh` sources `.my_config.zsh` (the base zsh options, aliases, completion, and keybindings) and then adds the same modern-CLI integrations as `profile.ps1`: eza-based `ls`/`ll`/`la`/`lt`, zoxide, Oh My Posh (using the same `config/oh-my-posh/theme.json`), and fzf's default-command env vars — each gated on the tool actually being installed.
+`profile.zsh` loads Oh My Zsh if `~/.zshrc` has not already loaded it, then sources `.my_config.zsh` (the base zsh options, aliases, completion, and keybindings) and adds eza-based `ls`/`ll`/`la`/`lt`, zoxide, and fzf's default-command env vars when those tools are installed. Oh My Zsh supplies the Linux prompt.
 
 ### Linux Config Parity
 
 `.my_config.zsh` is the single source of truth for base zsh behavior on Linux (history, completion, keybindings, core aliases), and Oh My Zsh remains the shell framework — the bootstrap never replaces its `~/.zshrc`, only appends to it. `installers/packages.sh` installs the CLI tools `.my_config.zsh` and `profile.zsh` expect, through whichever package manager `detect_package_manager` found:
 
 - `eza`, `bat` (binary `batcat` on Debian/Ubuntu), `fd`/`fd-find` (binary `fdfind` on Debian/Ubuntu), `ripgrep`, `zoxide`, `fzf` — via `apt`, `dnf`, or `pacman`/`yay`, per the `name:apt:dnf:pacman` table in `installers/packages.sh`.
-- `oh-my-posh` via its official install script (not packaged anywhere).
 - `bottom` (`btm`) — via `pacman`/`yay` on Arch (it's in the official repos there); via the latest GitHub release `.deb` on `apt`; via the release tarball dropped into `~/.local/bin` on `dnf`.
 
 On Arch-based systems, `yay` is bootstrapped automatically the first time a package needs installing (`ensure_yay` in `installers/common.sh` builds `yay-bin` from the AUR via `makepkg`) since it's never preinstalled.

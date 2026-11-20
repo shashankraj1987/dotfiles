@@ -22,18 +22,6 @@ package_name_for_manager() {
     esac
 }
 
-install_oh_my_posh() {
-    local force="$1"
-
-    if [ "$force" != "true" ] && has_command oh-my-posh; then
-        write_skip "Oh My Posh is already installed."
-        return
-    fi
-
-    write_step "Installing Oh My Posh..."
-    curl -s https://ohmyposh.dev/install.sh | bash -s
-}
-
 install_bottom() {
     local force="$1"
 
@@ -125,7 +113,6 @@ step_packages() {
         install_package "$pkg" "$name" "$force"
     done
 
-    install_oh_my_posh "$force"
     install_bottom "$force"
 }
 

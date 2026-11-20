@@ -1,6 +1,14 @@
 # Managed by dotfiles bootstrap. Linux counterpart to profile.ps1.
 DOTFILES_ROOT="${0:A:h}"
 
+# The unattended installer keeps ~/.zshrc unchanged. Load Oh My Zsh here on
+# fresh systems, while avoiding a second load when ~/.zshrc already sources it.
+if [[ -f "${ZSH:-$HOME/.oh-my-zsh}/oh-my-zsh.sh" ]] && (( ! ${+functions[omz]} )); then
+    export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+    ZSH_THEME="${ZSH_THEME:-robbyrussell}"
+    source "$ZSH/oh-my-zsh.sh"
+fi
+
 [ -f "$DOTFILES_ROOT/.my_config.zsh" ] && source "$DOTFILES_ROOT/.my_config.zsh"
 
 # fzf: Debian/Ubuntu package fd-find as "fdfind" to avoid a name clash.
@@ -22,8 +30,3 @@ if command -v eza > /dev/null; then
 fi
 
 command -v zoxide > /dev/null && eval "$(zoxide init zsh)"
-
-OH_MY_POSH_THEME="$DOTFILES_ROOT/config/oh-my-posh/theme.json"
-if command -v oh-my-posh > /dev/null && [ -f "$OH_MY_POSH_THEME" ]; then
-    eval "$(oh-my-posh init zsh --config "$OH_MY_POSH_THEME")"
-fi

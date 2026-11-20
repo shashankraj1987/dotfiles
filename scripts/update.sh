@@ -27,11 +27,6 @@ case "$PKG_MANAGER" in
         ;;
 esac
 
-if command -v oh-my-posh > /dev/null 2>&1; then
-    echo "Updating Oh My Posh..."
-    oh-my-posh upgrade || true
-fi
-
 if command -v asusctl > /dev/null 2>&1; then
     echo "Checking asusctl version..."
     installed_version=$(asusctl info 2>/dev/null | awk -F'v' '/^asusctl/{print $2}')
